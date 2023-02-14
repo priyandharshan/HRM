@@ -1,0 +1,94 @@
+plugins {
+    id 'org.springframework.boot' version '2.7.4'
+    id 'io.spring.dependency-management' version '1.0.14.RELEASE'
+    id 'java'
+    id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
+}
+
+group = 'com.invicta.Human-Resource-management'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+ext {
+    springBootVersion = '2.6.5'
+    queryDslVersion = '5.0.0'
+    lombokVersion = '1.18.6'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
+    implementation group: 'org.springframework.security', name: 'spring-security-crypto', version: '5.7.3'
+    implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.springframework.boot:spring-boot-starter-mail:2.7.1'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-test'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:2.7.3'
+    // QueryDsl
+    implementation group: 'com.querydsl', name: 'querydsl-apt', version: "${queryDslVersion}"
+    implementation group: 'com.querydsl', name: 'querydsl-jpa', version: "${queryDslVersion}"
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-oauth2', version: '2.2.4.RELEASE'
+
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:2021.0.2"
+        }
+    }
+}
+
+
+def generatedSrcDir = 'gradle/generated'
+querydsl {
+    jpa = true
+    querydslSourcesDir = generatedSrcDir
+}
+
+configurations {
+    querydsl.extendsFrom compileClasspath
+}
+
+compileQuerydsl {
+    options.annotationProcessorPath = configurations.querydsl
+    source = sourceSets.main.java
+    options.compilerArgs << '-proc:only' << "-processor" << "com.querydsl.apt.jpa.JPAAnnotationProcessor" << "-s" << file(generatedSrcDir).absolutePath
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "com.gradle.tutorial.FizzBuzzProcessor"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
